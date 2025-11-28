@@ -60,6 +60,10 @@ A production-ready Customer Portal POC demonstrating:
 3. **Bookings request** → Backend attempts ServiceM8 API call → **On 403/401/timeout/any error, automatically falls back to mock data** → Mock data is personalized with customer email/phone → Returns list of 3 mock bookings
 4. **Booking detail** → Backend attempts ServiceM8 API call → **On error, uses mock data** → Verifies customer access → Returns job data
 5. Messages → Stored in Supabase with customer_id and booking_id foreign keys
+   - **Important**: Messages work independently of ServiceM8 API
+   - Messages are saved to Supabase regardless of whether booking is from ServiceM8 or mock data
+   - Works with both real ServiceM8 booking UUIDs and mock booking IDs (e.g., "mock-job-001")
+   - Fully functional even when using mock data for bookings
 
 **Key Point**: The fallback to mock data is automatic and transparent. The system tries the real API first, and if it fails for any reason (403, 401, network error, timeout), it immediately switches to mock data without user intervention.
 

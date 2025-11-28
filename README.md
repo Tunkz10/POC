@@ -161,7 +161,9 @@ Frontend will run on http://localhost:3000
 1. On a booking detail page, scroll to the Messages section
 2. Type a message and click "Send"
 3. The message should appear in the message list
-4. Messages are stored in Supabase
+4. **Messages are stored in Supabase** - This works independently of ServiceM8 API
+5. Messages persist even when using mock data for bookings
+6. You can send multiple messages and they will all be saved and displayed
 
 ## Development Commands
 
