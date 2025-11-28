@@ -5,8 +5,10 @@
 .env.production
 .env.test
 .env.*.local
-.env.example
 *.env
+
+# NOTE: .env.example SHOULD be committed (it's a template, not secrets)
+# Do NOT ignore .env.example - it helps other developers know what variables are needed
 
 # Node modules
 node_modules/
