@@ -1,4 +1,16 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001/api';
+// Ensure API_BASE_URL always ends with /api
+let API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001/api';
+
+// Remove trailing slash if present
+API_BASE_URL = API_BASE_URL.replace(/\/$/, '');
+
+// Ensure /api is included
+if (!API_BASE_URL.endsWith('/api')) {
+  // If it doesn't end with /api, add it
+  API_BASE_URL = API_BASE_URL.endsWith('/') 
+    ? API_BASE_URL + 'api' 
+    : API_BASE_URL + '/api';
+}
 
 export const api = {
   async request(endpoint, options = {}) {
