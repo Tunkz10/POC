@@ -53,6 +53,22 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Root route - helpful for checking if server is running
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    message: 'Customer Portal Backend API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      auth: '/api/auth',
+      bookings: '/api/bookings',
+      messages: '/api/messages',
+      jobs: '/api/jobs'
+    }
+  });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
