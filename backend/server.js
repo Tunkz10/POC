@@ -33,6 +33,7 @@ const allowedOrigins = [
   'http://localhost:3001', // Alternative local port
 ].filter(Boolean); // Remove undefined values
 
+// Enhanced CORS configuration
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -45,12 +46,20 @@ app.use(cors({
       // In development, allow all origins for easier testing
       callback(null, true);
     } else {
-      // In production, only allow specified origins
+      // In production, log the blocked origin for debugging
+      console.log(`⚠️ CORS blocked origin: ${origin}`);
+      console.log(`✅ Allowed origins: ${allowedOrigins.join(', ')}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Handle preflight requests explicitly
+app.options('*', cors());
 app.use(express.json());
 
 // Root route - helpful for checking if server is running
