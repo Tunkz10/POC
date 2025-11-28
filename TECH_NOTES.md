@@ -6,7 +6,7 @@ A production-ready Customer Portal POC demonstrating:
 
 - **Next.js 14 Frontend** with App Router, Tailwind CSS, and client-side routing
 - **Express.js Backend** with RESTful API endpoints, JWT authentication, and middleware
-- **Real ServiceM8 API Integration** - The `/api/bookings` endpoint makes actual API calls to ServiceM8's job endpoint
+- **ServiceM8 API Integration** - Attempts real API calls to ServiceM8's job endpoint, with graceful fallback to mock data due to trial account API restrictions (403 Forbidden errors)
 - **Supabase Integration** for customer and message persistence
 - **Token-based Authentication** using JWT with 7-day expiration
 - **Message System** allowing customers to send messages tied to specific bookings
@@ -26,16 +26,18 @@ A production-ready Customer Portal POC demonstrating:
 - **Minimal UI**: Functional Tailwind CSS styling without over-engineering
 
 ### ServiceM8 Integration
-- **Real API Calls**: The `/api/bookings` endpoint makes actual GET requests to `https://api.servicem8.com/api/job.json`
-- **Basic Auth**: Uses Base64-encoded API key in Authorization header as per ServiceM8 documentation
-- **Customer Filtering**: Backend filters jobs by matching customer email/phone with job contact info
-- **Error Handling**: Proper error propagation from ServiceM8 API to frontend
+- **ServiceM8 API Issue**: The ServiceM8 API is currently returning 403 Forbidden / Access Denied errors due to trial account restrictions. API access is disabled on free trial accounts.
+- **Mock Data Solution**: The application gracefully handles this by falling back to mock data that mirrors the ServiceM8 schema, allowing the POC to function fully without real API access.
+- **Real API Call Attempt**: The code still attempts real API calls to `https://api.servicem8.com/api_1.0/job.json` (visible in `backend/routes/jobs.js`) to demonstrate proper integration, but automatically switches to mock data on failure.
+- **Basic Auth Implementation**: Uses Base64-encoded API key in Authorization header as per ServiceM8 documentation (ready for when API access is enabled).
+- **Customer Filtering**: Backend filters jobs by matching customer email/phone with job contact info (works with both real and mock data).
+- **Error Handling**: Graceful fallback to mock data ensures the POC remains fully functional despite ServiceM8 API limitations.
 
 ### Data Flow
 1. Customer logs in with email/phone → Backend creates/retrieves customer in Supabase → Returns JWT
 2. Frontend stores JWT in localStorage → Includes in Authorization header for subsequent requests
-3. Bookings request → Backend fetches all jobs from ServiceM8 → Filters by customer contact info → Returns filtered list
-4. Booking detail → Backend fetches specific job from ServiceM8 → Verifies customer access → Returns job data
+3. Bookings request → Backend attempts ServiceM8 API call → On 403/error, falls back to mock data → Filters by customer contact info → Returns filtered list
+4. Booking detail → Backend attempts ServiceM8 API call → On error, uses mock data → Verifies customer access → Returns job data
 5. Messages → Stored in Supabase with customer_id and booking_id foreign keys
 
 ## Assumptions

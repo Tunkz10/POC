@@ -1,6 +1,6 @@
 # Customer Portal POC
 
-A production-ready Customer Portal demonstrating Next.js, Express.js, Supabase, and ServiceM8 API integration.
+A production-ready Customer Portal demonstrating Next.js, Express.js, Supabase, and ServiceM8 API integration. **Note:** Currently using mock data for ServiceM8 due to trial account API restrictions (403 Forbidden errors), but the integration code is present and functional.
 
 ## Project Structure
 
@@ -126,15 +126,15 @@ Frontend will run on http://localhost:3000
 
 ### 2. Test Bookings
 
-1. After login, you should see a list of bookings (if any match your email/phone in ServiceM8)
-2. The bookings are fetched from the real ServiceM8 API
+1. After login, you should see a list of bookings
+2. **Note:** Due to ServiceM8 trial account restrictions (API access disabled), the app uses mock data that mirrors the ServiceM8 schema. The code attempts real API calls but gracefully falls back to mock data.
 3. Click on a booking to view details
 
 ### 3. Test Booking Details
 
 1. Click on any booking card
 2. View booking information (job number, status, date, address, etc.)
-3. This data comes from ServiceM8 API
+3. **Note:** Data comes from mock ServiceM8 responses (due to API access restrictions), but the integration code demonstrates proper API integration patterns
 
 ### 4. Test Messages
 
@@ -168,8 +168,9 @@ See `.env.example` for all required environment variables.
 - `GET /api/auth/me` - Get current user info
 
 ### Bookings
-- `GET /api/bookings` - Get all bookings for authenticated customer (from ServiceM8)
-- `GET /api/bookings/:id` - Get specific booking details (from ServiceM8)
+- `GET /api/bookings` - Get all bookings for authenticated customer (attempts ServiceM8 API, falls back to mock data)
+- `GET /api/bookings/:id` - Get specific booking details (attempts ServiceM8 API, falls back to mock data)
+- `GET /api/jobs` - Get jobs from ServiceM8 API (attempts real API call, falls back to mock data on 403/error)
 
 ### Messages
 - `GET /api/messages/:bookingId` - Get messages for a booking
@@ -189,9 +190,11 @@ All endpoints except `/api/auth/login` require authentication via Bearer token i
 - Verify `NEXT_PUBLIC_BACKEND_URL` is set correctly
 
 ### No bookings showing
-- Verify your ServiceM8 API key is correct
+- **ServiceM8 API Issue:** Trial accounts have API access disabled (403 Forbidden). The app automatically uses mock data in this case.
+- If using a paid ServiceM8 account, verify your API key is correct
 - Check that jobs in ServiceM8 have email/phone matching your login credentials
 - Check browser console and backend logs for errors
+- Mock data should display automatically if API calls fail
 
 ### Messages not saving
 - Verify Supabase connection (check SUPABASE_URL and SUPABASE_KEY)

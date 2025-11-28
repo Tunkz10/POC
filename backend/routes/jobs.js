@@ -9,35 +9,89 @@ router.get('/', async (req, res) => {
     const apiKey = process.env.SERVICEM8_API_KEY;
     
     if (!apiKey) {
-      console.log('ServiceM8 API failed, switching to fallback mode');
-      return res.json(getMockJobs());
+      console.log('⚠️ ServiceM8 API key not configured, switching to fallback mode');
+      return res.json({ 
+        success: false,
+        message: 'API key not configured',
+        data: getMockJobs(),
+        usingMockData: true
+      });
     }
 
     // ATTEMPT the real Axios request to ServiceM8 API
+    // Try multiple endpoint variations
+    const endpoints = [
+      'https://api.servicem8.com/api_1.0/job.json',
+      'https://api.servicem8.com/api/1.0/job.json',
+      'https://api.servicem8.com/api/job.json'
+    ];
+
     const authString = Buffer.from(`${apiKey}:`).toString('base64');
     
-    const response = await axios.get('https://api.servicem8.com/api_1.0/job.json', {
-      headers: {
-        'Authorization': `Basic ${authString}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    let lastError = null;
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`🔄 Attempting ServiceM8 API call to: ${endpoint}`);
+        const response = await axios.get(endpoint, {
+          headers: {
+            'Authorization': `Basic ${authString}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000 // 10 second timeout
+        });
 
-    // If successful, return the real data
-    return res.json(response.data);
+        console.log('✅ ServiceM8 API call successful!');
+        console.log(`📊 Response status: ${response.status}`);
+        console.log(`📦 Data type: ${Array.isArray(response.data) ? 'Array' : typeof response.data}`);
+        console.log(`📈 Items count: ${Array.isArray(response.data) ? response.data.length : 'N/A'}`);
+
+        // If successful, return the real data
+        return res.json({
+          success: true,
+          message: 'ServiceM8 API call successful',
+          endpoint: endpoint,
+          data: response.data,
+          usingMockData: false
+        });
+      } catch (error) {
+        lastError = error;
+        console.log(`❌ Failed endpoint ${endpoint}:`, {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          message: error.message
+        });
+        // Continue to next endpoint
+      }
+    }
+
+    // If all endpoints failed, throw the last error
+    throw lastError || new Error('All ServiceM8 API endpoints failed');
     
   } catch (error) {
     // WRAP the request in a try/catch block
     // IN THE CATCH BLOCK: Log the API failure clearly
-    console.log('ServiceM8 API failed, switching to fallback mode');
-    console.error('ServiceM8 API Error:', {
+    console.log('⚠️ ServiceM8 API failed, switching to fallback mode');
+    console.error('ServiceM8 API Error Details:', {
       status: error.response?.status,
       statusText: error.response?.statusText,
-      message: error.message
+      statusCode: error.response?.statusCode,
+      message: error.message,
+      responseData: error.response?.data,
+      apiKeyPrefix: process.env.SERVICEM8_API_KEY ? `${process.env.SERVICEM8_API_KEY.substring(0, 10)}...` : 'missing'
     });
 
     // RETURN a hardcoded "Mock Data" JSON array instead
-    return res.json(getMockJobs());
+    return res.json({
+      success: false,
+      message: 'ServiceM8 API unavailable, using mock data',
+      error: {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        message: error.message
+      },
+      data: getMockJobs(),
+      usingMockData: true
+    });
   }
 });
 
