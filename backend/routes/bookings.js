@@ -110,11 +110,28 @@ router.get('/test-api', async (req, res) => {
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const apiKey = process.env.SERVICEM8_API_KEY;
+    const useMock = process.env.SERVICEM8_USE_MOCK === 'true';
     
-    if (!apiKey) {
-      return res.status(500).json({ 
-        error: 'ServiceM8 API key not configured',
-        bookings: [] 
+    // If no API key or mock mode enabled, use mock data directly
+    if (!apiKey || useMock) {
+      console.log('📦 Using mock data (no API key or mock mode enabled)');
+      
+      // Get customer info for personalized mock data
+      const customer = await supabase
+        .from('customers')
+        .select('email, phone')
+        .eq('id', req.user.customerId)
+        .single();
+
+      const customerData = customer.data || {};
+      
+      // Import and use mock data
+      const { getServiceM8Jobs } = await import('../services/serviceM8.js');
+      const mockJobs = await getServiceM8Jobs(null, customerData.email, customerData.phone);
+      
+      return res.json({ 
+        bookings: Array.isArray(mockJobs) ? mockJobs : [],
+        serviceM8Error: !apiKey ? 'ServiceM8 API key not configured. Using demo mode.' : null
       });
     }
 
@@ -180,36 +197,15 @@ router.get('/', authenticateToken, async (req, res) => {
     // Final safety check - if still no jobs, use mock data
     if (!Array.isArray(jobs) || jobs.length === 0) {
       console.log('📦 Final fallback: Using mock data directly');
-      // Import mock function if needed, or just ensure we have data
-      // The getServiceM8Jobs should have already returned mock data, but just in case...
-      const mockData = [
-        {
-          uuid: 'mock-job-001',
-          job_number: 'JOB-2024-001',
-          status: 'Scheduled',
-          date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-          time: '09:00',
-          description: 'Plumbing repair - Leaky faucet in kitchen',
-          job_address: '123 Main Street, City, State 12345',
-          job_email: customerData.email,
-          job_phone: customerData.phone,
-        }
-      ];
-      jobs = mockData;
+      // Get mock data from service
+      const { getServiceM8Jobs } = await import('../services/serviceM8.js');
+      jobs = await getServiceM8Jobs(null, customerData.email, customerData.phone);
       serviceM8Error = serviceM8Error || 'Using demo data';
     }
     
-    // Filter jobs by customer email/phone
-    const filteredJobs = Array.isArray(jobs) 
-      ? jobs.filter(job => {
-          const jobEmail = job.job_email?.toLowerCase();
-          const jobPhone = job.job_phone?.replace(/\D/g, '');
-          const customerEmail = customerData.email?.toLowerCase();
-          const customerPhone = customerData.phone?.replace(/\D/g, '');
-
-          return (jobEmail === customerEmail) || (jobPhone === customerPhone);
-        })
-      : [];
+    // For mock data, don't filter - just return all mock jobs
+    // (Mock data is already personalized to the customer)
+    const filteredJobs = Array.isArray(jobs) ? jobs : [];
 
     // If no bookings and we had an error, ensure we return empty array with error message
     // The frontend will show the appropriate message
