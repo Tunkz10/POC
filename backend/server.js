@@ -15,13 +15,16 @@ import messagesRoutes from './routes/messages.js';
 import jobsRoutes from './routes/jobs.js';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+
+// PORT configuration - Render requires process.env.PORT
+const PORT = process.env.PORT || 4000;
 
 // CORS configuration - allow multiple origins for development and production
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:3000',
-  'http://localhost:3001',
+  'https://poc-kwpr.vercel.app', // Production Vercel frontend
+  process.env.FRONTEND_URL, // Environment variable override
+  'http://localhost:3000', // Local development
+  'http://localhost:3001', // Alternative local port
 ].filter(Boolean); // Remove undefined values
 
 app.use(cors({
@@ -29,9 +32,14 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+    // Check if origin is in allowed list
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else if (process.env.NODE_ENV !== 'production') {
+      // In development, allow all origins for easier testing
       callback(null, true);
     } else {
+      // In production, only allow specified origins
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -55,7 +63,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🌐 Allowed origins: ${allowedOrigins.join(', ')}`);
 });
 
